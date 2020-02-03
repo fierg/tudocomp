@@ -31,6 +31,11 @@ run_doc_snippet(compressor_impl     DEPS ${BASIC_DEPS})
 run_doc_snippet(generator_impl      DEPS ${BASIC_DEPS})
 run_doc_snippet(stats               DEPS ${BASIC_DEPS})
 
+# bit_span
+run_test(generic_int_vector_tests DEPS ${TDC_TEST_DEPS} bit_span)
+run_test(bit_packed_layout_tests DEPS ${TDC_TEST_DEPS} bit_span)
+run_test(int_coder_tests DEPS ${TDC_TEST_DEPS} bit_span)
+
 # other tests
 run_test(rank_select_tests  DEPS ${BASIC_DEPS})
 run_test(ringbuffer_tests   DEPS ${BASIC_DEPS})

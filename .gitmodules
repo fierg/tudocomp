@@ -1,9 +1,6 @@
 [submodule "external/datasets"]
 	path = submodules/datasets
 	url = https://github.com/tudocomp/datasets.git
-[submodule "external/bit_span"]
-	path = submodules/bit_span
-	url = https://github.com/tudocomp/bit_span.git
 [submodule "external/compact_sparse_hash"]
 	path = submodules/compact_sparse_hash
 	url = https://github.com/tudocomp/compact_sparse_hash.git
