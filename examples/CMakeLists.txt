@@ -1,26 +1,23 @@
-# Create executable for every *.cpp file
 add_custom_target(examples)
 
-FILE(GLOB children RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)
+# Create executable for every *.cpp file
+FILE(GLOB children RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 FOREACH(child ${children})
-    IF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${child})
-        add_subdirectory(${child})
-    ENDIF()
+    get_filename_component(executable ${child} NAME_WE)
+    
+    add_executable(
+        ${executable} 
+
+        ${child}
+        )
+
+    target_include_directories(${executable} INTERFACE include)
+
+    target_link_libraries(
+        ${executable}
+
+        tudocomp
+        )
+        
+    add_dependencies(examples ${executable})
 ENDFOREACH()
-
-add_executable(
-    coder_stats_example
-
-    coder_stats.cpp
-)
-
-target_link_libraries(
-    coder_stats_example
-
-    ${TDC_DEPENDS}
-    tudocomp
-    bit_span
-)
-
-add_dependencies(examples coder_stats_example)
-

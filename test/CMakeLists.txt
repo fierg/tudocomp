@@ -39,6 +39,24 @@ run_test(int_coder_tests DEPS ${TDC_TEST_DEPS})
 # tudostats
 run_test(tudostats_tests DEPS ${TDC_TEST_DEPS})
 
+# csh
+run_test(compact_sparse_hash_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_hash_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hash_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_hash_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hash_elias_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_hash_elias_displacement_tests DEPS ${TDC_TEST_DEPS})
+
+run_test(v2_tests DEPS ${TDC_TEST_DEPS})
+run_test(sandbox_test DEPS ${TDC_TEST_DEPS})
+
+run_test(compact_sparse_hashset_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hashset_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hashset_elias_displacement_tests DEPS ${TDC_TEST_DEPS})
+
+run_test(compact_sparse_hashset_serialization_tests DEPS ${TDC_TEST_DEPS})
+
+
 # other tests
 run_test(rank_select_tests  DEPS ${BASIC_DEPS})
 run_test(ringbuffer_tests   DEPS ${BASIC_DEPS})
