@@ -37,7 +37,7 @@ run_test(bit_packed_layout_tests DEPS ${TDC_TEST_DEPS})
 run_test(int_coder_tests DEPS ${TDC_TEST_DEPS})
 
 # tudostats
-run_test(tudostats_tests DEPS ${TDC_TEST_DEPS})
+run_test(tudostats_tests DEPS ${TDC_TEST_DEPS} tudocomp_stat)
 
 # csh
 run_test(compact_sparse_hash_tests DEPS ${TDC_TEST_DEPS})
@@ -69,7 +69,12 @@ run_test(huff_test      DEPS ${BASIC_DEPS})
 run_test(arithm_tests   DEPS ${BASIC_DEPS})
 run_test(coder_tests    DEPS ${BASIC_DEPS})
 run_test(cedar_tests    DEPS ${BASIC_DEPS})
-run_test(st_tests       DEPS ${BASIC_DEPS})
+
+if(SDSL_FOUND)
+    run_test(st_tests DEPS ${BASIC_DEPS})
+endif()
+
+
 run_test(maxlcp_tests   DEPS ${BASIC_DEPS})
 
 run_test(lz_trie_tests  DEPS ${BASIC_DEPS})
