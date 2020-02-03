@@ -33,8 +33,7 @@ TEST(TudocompDriver, algorithm_header) {
 
     ASSERT_FALSE(abort);
 
-    constexpr auto expected_magic =
-        "lz78(coder=ascii())%";
+    constexpr auto expected_magic = "lz78(dict_size='0', coder=ascii())%";
 
     std::string text0 = test::read_test_file(driver_test::roundtrip_comp_file_name(
         "lz78(ascii)", "_header_test_0"));
