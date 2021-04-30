@@ -26,3 +26,4 @@ sdsl_external-prefix/*
 src/generated/generated_source/*
 src/generated/libtudocomp_algorithms.a
 src/tudocomp_stat/libtudocomp_stat.a
+*.tdc

@@ -5,71 +5,11 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 
-namespace tdc {
+typedef unsigned char BYTE;
 
-/**
- * Encode a byte-stream with modified binary run length encoding
- */
-template<class char_type>
-void mod_rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
-	char_type prev;
-	if(tdc_unlikely(!is.get(prev))) return;
-	os << prev;
-	char_type c;
-	std::string s(std::basic_istream<char_type>(is), {});
-	int occurences[255];
+namespace tdc{
 
-	//count occurences of each char of the stream
-	for (int i = 0; i < 255; i++)
-	{
-		occurences[i]=boost::count(s, static_cast<char>(i));
-	}
-
-	while(is.get(c)) {
-		// construct the bitwise input stream
-		BitIStream ibits(input); 
-		bool bit = ibits.read_bit(); // read a single bit
-
-
-		prev = c;
-	}
-
-	
-}
-/**
- * Decodes a modified run length encoded stream
- */
-template<class char_type>
-void mod_rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
-	//TODO
-}
-
-class RunLengthEncoder : public Compressor {
-public:
-    inline static Meta meta() {
-        Meta m("compressor", "m-rle", "Modified Run Length Encoding Compressor");
-        m.option("offset").dynamic(0);
-        return m;
-    }
-	const size_t m_offset;
-    inline RunLengthEncoder(Env&& env)
-		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
-    }
-
-    inline virtual void compress(Input& input, Output& output) override {
-		auto is = input.as_stream();
-		auto os = output.as_stream();
-		rle_encode(is,os,m_offset);
-	}
-    inline virtual void decompress(Input& input, Output& output) override {
-		auto is = input.as_stream();
-		auto os = output.as_stream();
-		rle_decode(is,os,m_offset);
-	}
-}
-
-std::vector<BYTE> createMapping(){
-    std::ifstream src("test.txt");
+std::vector<BYTE> createMapping(std::istream& src){
     std::vector<int> list(255);
 
     if (!src)
@@ -81,13 +21,12 @@ std::vector<BYTE> createMapping(){
     {
         list[(int)ch]++;
     }
-    for (int i = 0; i < list.size(); i++)
+    for (long unsigned int i = 0; i < list.size(); i++)
     {
         std::cout
             << "char: " << i << ":" << (char)i
             << " frequency = " << list[i] << '\n';
     }
-    src.close();
 
     std::vector<BYTE> mapping(255);
     for (int i = 0; i < mapping.size(); i++)
@@ -123,6 +62,31 @@ std::vector<BYTE> readFile(const char *filename)
     return fileData;
 }
 
+class ModifiedRunLengthEncoder : public Compressor {
+public:
+    inline static Meta meta() {
+        Meta m("compressor", "mrle", "Modified Run Length Encoding Compressor");
+        m.option("offset").dynamic(0);
+        return m;
+    }
+	const size_t m_offset;
+    inline ModifiedRunLengthEncoder(Env&& env)
+		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
+    }
 
-}//ns
+    inline virtual void compress(Input& input, Output& output) override {
+        std::cout
+            << "[debug] methodEnter ModifiedRunLengthEncoder::compress\n";
+    auto istream = input.as_stream(); 
+    std::vector<BYTE> mapping = createMapping(istream);
+
+
+
+	}
+    inline virtual void decompress(Input& input, Output& output) override {
+
+
+	}
+};
+}
 
