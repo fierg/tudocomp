@@ -228,7 +228,7 @@ tdc.compressors = [
     AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lcpcomp_coders, lcpcomp_comp, lcpcomp_dec, lcpcomp_textds]),
     AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_comp, universal_coders]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
-    AlgorithmConfig(name="ModifiedRunLengthEncoder", header="compressors/ModifiedRunLengthEncoder.hpp"),
+    AlgorithmConfig(name="ModifiedRunLengthEncoder", header="compressors/ModifiedRunLengthEncoder.hpp", sub=[entropy_coders]),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),

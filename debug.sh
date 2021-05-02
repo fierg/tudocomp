@@ -4,4 +4,4 @@ FILE=$1
 
 [ -e $FILE.tdc ] && rm $FILE.tdc
 
-./tdc -a "mrle" $FILE
+./tdc -a "mrle(coder=huff)" $FILE
