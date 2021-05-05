@@ -8,19 +8,19 @@
 typedef unsigned char BYTE;
 
 #define myLog
+#define U_INT_MAX 0b11111111111111111111111111111111
 
 namespace tdc
 {
 
-    class Literals : LiteralIterator
+    class RunData : LiteralIterator
     {
     private:
-        //const vector<vector<BYTE>>*   m_runs;
-        std::vector<Literal> m_literals;
-        len_t m_pos;
+        len_t m_pos; 
 
     public:
-        inline Literals(const std::vector<std::vector<BYTE>> &runs)
+        std::vector<unsigned int> m_runs;
+        inline RunData(const std::vector<std::vector<unsigned int>> &runs)
             : m_pos(0)
         {
             std::cout
@@ -30,43 +30,25 @@ namespace tdc
             {
                 for (unsigned int vPos = 0; vPos < runs[bitPos].size(); vPos++)
                 {
-                    Literal l;
-                    l.c = runs[bitPos][vPos];
-                    l.pos = bitPos + 8 * vPos;
-                    m_literals.push_back(l);
+                    m_runs.push_back(runs[bitPos][vPos]);
 
-                    // log
-                    std::cout << "| l(" << (unsigned int)l.c << ", " << l.pos << ")"
-                              << "\n";
+                    // push end of row
+                    if (vPos == runs[bitPos].size() -1) {
+                        m_runs.push_back(U_INT_MAX);
+                    }
                 }
             }
         }
 
         inline bool has_next() const
         {
-            return m_pos < m_literals.size();
+            return m_pos < m_runs.size();
         }
 
-        inline Literal next()
+        inline unsigned int next()
         {
             assert(has_next());
-
-            return m_literals[m_pos++];
-
-            // old
-            //
-            // if(m_pos < m_text_size) {
-            //     // from encoded text
-            //     auto l = Literal { uliteral_t((*m_text)[m_pos]), m_pos };
-            //     m_pos = m_next[m_pos];
-            //     return l;
-            // } else {
-            //     // from grammar right sides
-            //     auto l = Literal { m_g_literals[m_g_pos],
-            //                        m_text_size + 2 * m_g_pos };
-            //     ++m_g_pos;
-            //     return l;
-            // }
+            return m_runs[m_pos++];
         }
     };
 
@@ -90,17 +72,26 @@ namespace tdc
             std::cout
                 << "[debug] methodEnter ModifiedRunLengthEncoder::compress\n";
             auto istream = input.as_stream();
-		    auto iview = input.as_view();
+            auto iview = input.as_view();
             std::vector<BYTE> mapping = createByteMapping(istream);
+            int maxRun = 0;
 
-            std::vector<BYTE> run0; run0.push_back(0);
-            std::vector<BYTE> run1; run1.push_back(0);
-            std::vector<BYTE> run2; run2.push_back(0);
-            std::vector<BYTE> run3; run3.push_back(0);
-            std::vector<BYTE> run4; run4.push_back(0);
-            std::vector<BYTE> run5; run5.push_back(0);
-            std::vector<BYTE> run6; run6.push_back(0);
-            std::vector<BYTE> run7; run7.push_back(0);
+            std::vector<unsigned int> run0;
+            run0.push_back(0);
+            std::vector<unsigned int> run1;
+            run1.push_back(0);
+            std::vector<unsigned int> run2;
+            run2.push_back(0);
+            std::vector<unsigned int> run3;
+            run3.push_back(0);
+            std::vector<unsigned int> run4;
+            run4.push_back(0);
+            std::vector<unsigned int> run5;
+            run5.push_back(0);
+            std::vector<unsigned int> run6;
+            run6.push_back(0);
+            std::vector<unsigned int> run7;
+            run7.push_back(0);
 
             bool bit0 = false;
             bool bit1 = false;
@@ -123,6 +114,8 @@ namespace tdc
                     run0[run0.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run0[run0.size() - 1])  maxRun = run0[run0.size() - 1];
+                    
                     bit0 = !bit0;
                     run0.push_back(1);
                 }
@@ -130,6 +123,7 @@ namespace tdc
                     run1[run1.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run1[run1.size() - 1])  maxRun = run1[run1.size() - 1];
                     bit1 = !bit1;
                     run1.push_back(1);
                 }
@@ -137,6 +131,7 @@ namespace tdc
                     run2[run2.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run2[run2.size() - 1])  maxRun = run2[run2.size() - 1];
                     bit2 = !bit2;
                     run2.push_back(1);
                 }
@@ -144,6 +139,7 @@ namespace tdc
                     run3[run3.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run3[run3.size() - 1])  maxRun = run3[run3.size() - 1];
                     bit3 = !bit3;
                     run3.push_back(1);
                 }
@@ -151,6 +147,7 @@ namespace tdc
                     run4[run4.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run4[run4.size() - 1])  maxRun = run4[run4.size() - 1];
                     bit4 = !bit4;
                     run4.push_back(1);
                 }
@@ -158,6 +155,7 @@ namespace tdc
                     run5[run5.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run5[run5.size() - 1])  maxRun = run5[run5.size() - 1];
                     bit5 = !bit5;
                     run5.push_back(1);
                 }
@@ -165,6 +163,7 @@ namespace tdc
                     run6[run6.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run6[run6.size() - 1])  maxRun = run6[run6.size() - 1];
                     bit6 = !bit6;
                     run6.push_back(1);
                 }
@@ -172,12 +171,13 @@ namespace tdc
                     run7[run7.size() - 1] += 1;
                 else
                 {
+                    if (maxRun < run7[run7.size() - 1])  maxRun = run7[run7.size() - 1];
                     bit7 = !bit7;
                     run7.push_back(1);
                 }
             }
 
-            std::vector<std::vector<BYTE>> allRuns;
+            std::vector<std::vector<unsigned int>> allRuns;
             allRuns.push_back(run0);
             allRuns.push_back(run1);
             allRuns.push_back(run2);
@@ -200,11 +200,19 @@ namespace tdc
                 << "[debug] runs6:" << allRuns[6].size() << "\n"
                 << "[debug] runs7:" << allRuns[7].size() << "\n";
 
+            RunData literals(allRuns);
 
+            typename coder_t::Encoder coder(env().env_for_option("coder"), output, literals);
 
-                
+            //define the range for all occuring characters
+            Range range(0,maxRun);
+            MinDistributedRange minRange(0,maxRun);
 
-            typename coder_t::Encoder coder(env().env_for_option("coder"), output, Literals(allRuns));
+            // encode runs
+            for (unsigned int run : literals.m_runs)
+            {
+                coder.encode(run, range);
+            }
         }
 
         inline virtual void decompress(Input &input, Output &output) override
@@ -213,14 +221,20 @@ namespace tdc
             auto ostream = output.as_stream();
 
             // instantiate the decoder using the whole input alphabet
-            typename coder_t::Decoder decoder(
-                env().env_for_option("coder"), input);
+            typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
             // decode text
             while (!decoder.eof())
             {
                 // decode text
-                //uliteral_t c = c_min + decoder.template decode<uliteral_t>(occ_r);
+                //uliteral_t c =  decoder.template decode<uliteral_t>(range);
+
+
+
+
+
+
+              //  ostream << c;
             }
         }
 
@@ -262,31 +276,3 @@ namespace tdc
         }
     };
 }
-
-/*
-TEST(doc_compressor_impl, cycle)
-{
-    const string example = "aaabbaabab";
-
-    // Run compression cycles using different encoders
-    test::roundtrip<ModifiedRunLengthEncoder<HuffmanCoder>>(example);
-    test::roundtrip<ModifiedRunLengthEncoder<ASCIICoder>>(example);
-    test::roundtrip<ModifiedRunLengthEncoder<BitCoder>>(example);
-    test::roundtrip<ModifiedRunLengthEncoder<EliasDeltaCoder>>(example);
-}
-
-TEST(doc_compressor_impl, helpers)
-{
-    // perform border case compression tests using different encoders
-    test::roundtrip_batch(test::roundtrip<ModifiedRunLengthEncoder<HuffmanCoder>>);
-    test::roundtrip_batch(test::roundtrip<ModifiedRunLengthEncoder<ASCIICoder>>);
-    test::roundtrip_batch(test::roundtrip<ModifiedRunLengthEncoder<BitCoder>>);
-    test::roundtrip_batch(test::roundtrip<ModifiedRunLengthEncoder<EliasDeltaCoder>>);
-
-    // perform compression tests on generated strings using different encoders
-    test::on_string_generators(test::roundtrip<ModifiedRunLengthEncoder<HuffmanCoder>>, 15);
-    test::on_string_generators(test::roundtrip<ModifiedRunLengthEncoder<EliasDeltaCoder>>, 15);
-    test::on_string_generators(test::roundtrip<ModifiedRunLengthEncoder<BitCoder>>, 15);
-    test::on_string_generators(test::roundtrip<ModifiedRunLengthEncoder<ASCIICoder>>, 15);
-}
-*/
