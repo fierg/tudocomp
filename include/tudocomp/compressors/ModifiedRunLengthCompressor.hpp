@@ -2,8 +2,8 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/vbyte.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 typedef unsigned char BYTE;
@@ -15,59 +15,57 @@ namespace tdc
     const BYTE MAX_RUN_COUNT = 255;
     const unsigned int MAP_SIZE = MAX_RUN_COUNT + 1;
 
-    class Literals : LiteralIterator
+    template <typename coder_t>
+    class ModifiedRunLengthEncoder : public CompressorAndDecompressor
     {
-    private:
-        len_t m_pos;
 
-    public:
-        std::vector<Literal> m_literals;
-        inline Literals(const std::vector<std::vector<BYTE>> &runs)
-            : m_pos(0)
+        class Literals : LiteralIterator
         {
-            for (unsigned int bitPos = 0; bitPos < 8; bitPos++)
+        private:
+            len_t m_pos;
+
+        public:
+            std::vector<Literal> m_literals;
+            inline Literals(const std::vector<std::vector<BYTE>> &runs)
+                : m_pos(0)
             {
-                for (unsigned int vPos = 0; vPos < runs[bitPos].size(); vPos++)
+                for (unsigned int bitPos = 0; bitPos < 8; bitPos++)
                 {
+                    for (unsigned int vPos = 0; vPos < runs[bitPos].size(); vPos++)
+                    {
+                        Literal l;
+                        l.c = runs[bitPos][vPos];
+                        m_literals.push_back(l);
+                    }
                     Literal l;
-                    l.c = runs[bitPos][vPos];
+                    l.c = MAX_RUN_COUNT;
                     m_literals.push_back(l);
                 }
-                Literal l;
-                l.c = MAX_RUN_COUNT;
-                m_literals.push_back(l);
             }
-        }
 
-        inline bool has_next() const
-        {
-            return m_pos < m_literals.size();
-        }
+            inline bool has_next() const
+            {
+                return m_pos < m_literals.size();
+            }
 
-        inline Literal next()
-        {
-            assert(has_next());
-            return m_literals[m_pos++];
-        }
-    };
-
-    template <typename coder_t>
-    class ModifiedRunLengthEncoder : public Compressor
-    {
+            inline Literal next()
+            {
+                assert(has_next());
+                return m_literals[m_pos++];
+            }
+        };
 
     public:
         inline static Meta meta()
         {
             Meta m("compressor", "mrle", "Modified Run Length Encoding Compressor");
-            m.option("coder").templated<coder_t>("coder");
+            m.param("coder", "The output encoder.").strategy<coder_t>(TypeDesc("coder"), Meta::Default<HuffmanCoder>());
             return m;
         }
-        inline ModifiedRunLengthEncoder(Env &&env)
-            : Compressor(std::move(env))
-        {
-        }
 
-        inline virtual void compress(Input &input, Output &output) override
+        using CompressorAndDecompressor::CompressorAndDecompressor;
+
+        virtual void compress(Input &input, Output &output) override
         {
             // Stats
             StatPhase phase("Modified Run Length Compression");
@@ -109,19 +107,25 @@ namespace tdc
             allRuns.push_back(run6);
             allRuns.push_back(run7);
 
-            for (unsigned int i = 0; i < iview.size(); i++){
+            for (unsigned int i = 0; i < iview.size(); i++)
+            {
                 uliteral_t c = mapping[iview[i]];
-                for (unsigned int bitPos = 0; bitPos < 8; bitPos++){
-                    if (bitBoolean[bitPos] == ((c >> bitPos) & 1)){
-                        if (allRuns[bitPos][allRuns[bitPos].size() - 1] == 254){
+                for (unsigned int bitPos = 0; bitPos < 8; bitPos++)
+                {
+                    if (bitBoolean[bitPos] == ((c >> bitPos) & 1))
+                    {
+                        if (allRuns[bitPos][allRuns[bitPos].size() - 1] == 254)
+                        {
                             allRuns[bitPos].push_back(0);
                             allRuns[bitPos].push_back(1);
                         }
-                        else{
+                        else
+                        {
                             allRuns[bitPos][allRuns[bitPos].size() - 1] += 1;
                         }
                     }
-                    else{
+                    else
+                    {
                         bitBoolean[bitPos] = !bitBoolean[bitPos];
                         allRuns[bitPos].push_back(1);
                     }
@@ -131,11 +135,13 @@ namespace tdc
 
             Literals literals(allRuns);
 
-            typename coder_t::Encoder coder(env().env_for_option("coder"), output, literals);
+            // instantiate encoder
+            typename coder_t::Encoder coder(config().sub_config("coder"), output, literals);
+
 
             for (BYTE mappingEntry : mapping)
             {
-                coder.encode(mappingEntry, Range(0,MAP_SIZE));
+                coder.encode(mappingEntry, Range(0, MAP_SIZE));
                 //std::cout << "[debug] encoding mapping: " << (unsigned int) mappingEntry << "\n";
             }
 
@@ -145,22 +151,22 @@ namespace tdc
                 //std::cout << "[debug] encoding run: " << (unsigned int)run.c << "\n";
                 coder.encode(run.c, literal_r);
             }
-            phase.to_json().str(std::cout);
+            std::cout << phase.to_json();
         }
 
-        inline virtual void decompress(Input &input, Output &output) override
+        virtual void decompress(Input &input, Output &output) override
         {
             // retrieve an output stream
             auto ostream = output.as_stream();
 
             // instantiate the decoder using the whole input alphabet
-            typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+            typename coder_t::Decoder decoder(config().sub_config("coder"), input);
 
             std::vector<BYTE> parsed_mapping;
 
             for (int i = 0; i < MAP_SIZE; i++)
             {
-                auto mappingEntry = decoder.template decode<uliteral_t>(Range(0,MAP_SIZE));
+                auto mappingEntry = decoder.template decode<uliteral_t>(Range(0, MAP_SIZE));
                 parsed_mapping.push_back(mappingEntry);
                 //std::cout << "[debug] decoded mapping entry: " << (unsigned int) mappingEntry << "\n";
             }
@@ -281,11 +287,10 @@ namespace tdc
                 list[current_max_pos] = -1;
             }
 
-
             for (int i = 0; i < mapping.size(); i++)
-             {
-                 //std::cout << "[debug] Mapping entry: " << i << " : " << (unsigned int)mapping[i] << "\n";
-             }
+            {
+                //std::cout << "[debug] Mapping entry: " << i << " : " << (unsigned int)mapping[i] << "\n";
+            }
             return mapping;
         }
     };
