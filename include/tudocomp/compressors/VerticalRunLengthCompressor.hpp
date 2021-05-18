@@ -16,7 +16,7 @@ namespace tdc
     const unsigned int MAP_SIZE = MAX_RUN_COUNT + 1;
 
     template <typename coder_t>
-    class ModifiedRunLengthEncoder : public CompressorAndDecompressor
+    class VerticalRunLengthEncoder : public CompressorAndDecompressor
     {
 
         class Literals : LiteralIterator
@@ -58,7 +58,7 @@ namespace tdc
     public:
         inline static Meta meta()
         {
-            Meta m("compressor", "mrle", "Modified Run Length Encoding Compressor");
+            Meta m("compressor", "vrle", "Vertical Run Length Encoding Compressor");
             m.param("coder", "The output encoder.").strategy<coder_t>(TypeDesc("coder"), Meta::Default<HuffmanCoder>());
             return m;
         }
@@ -138,20 +138,16 @@ namespace tdc
             // instantiate encoder
             typename coder_t::Encoder coder(config().sub_config("coder"), output, literals);
 
-
             for (BYTE mappingEntry : mapping)
             {
                 coder.encode(mappingEntry, Range(0, MAP_SIZE));
-                //std::cout << "[debug] encoding mapping: " << (unsigned int) mappingEntry << "\n";
             }
 
             // encode runs
             for (Literal run : literals.m_literals)
             {
-                //std::cout << "[debug] encoding run: " << (unsigned int)run.c << "\n";
                 coder.encode(run.c, literal_r);
             }
-            std::cout << phase.to_json();
         }
 
         virtual void decompress(Input &input, Output &output) override
@@ -168,7 +164,6 @@ namespace tdc
             {
                 auto mappingEntry = decoder.template decode<uliteral_t>(Range(0, MAP_SIZE));
                 parsed_mapping.push_back(mappingEntry);
-                //std::cout << "[debug] decoded mapping entry: " << (unsigned int) mappingEntry << "\n";
             }
 
             std::vector<BYTE> mapping(MAP_SIZE);
@@ -204,7 +199,6 @@ namespace tdc
             while (!decoder.eof())
             {
                 uliteral_t c = decoder.template decode<uliteral_t>(literal_r);
-                //std::cout << "[debug] decoded at " << count++ << " char" << (int)c << "\n";
                 if (c == MAX_RUN_COUNT)
                     bitPos++;
                 else
@@ -286,12 +280,12 @@ namespace tdc
                 mapping[current_max_pos] = (BYTE)i;
                 list[current_max_pos] = -1;
             }
-
-            for (int i = 0; i < mapping.size(); i++)
-            {
-                //std::cout << "[debug] Mapping entry: " << i << " : " << (unsigned int)mapping[i] << "\n";
-            }
             return mapping;
+        }
+
+        inline std::unique_ptr<Decompressor> decompressor() const override
+        {
+            return std::make_unique<WrapDecompressor>(*this);
         }
     };
 }
